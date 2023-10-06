@@ -26,7 +26,7 @@ data Query
 --
 -- which is the behaviour of `elements` on this input.
 execute :: Query -> Transformer
-execute = error "UNIMPLEMENTED: execute"
+execute = undefined
 
 -- HINT: this function is very similar to the 'eval' function for
 -- evaluating Boolean formulas defined in the Week03 problems.

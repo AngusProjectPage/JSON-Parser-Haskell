@@ -1,6 +1,7 @@
 module JSONTransformer (Transformer, field, select, pipe, string, int, equal, elements) where
 
 import JSON
+import GHC.Base (bindIO)
 
 -- | A 'Transformer' is a function that takes a single 'JSON' value
 -- and returns a list of 'JSON' values.
@@ -28,8 +29,7 @@ type Transformer = JSON -> [JSON]
 --
 --  > [String "hello"]
 string :: String -> Transformer
-string = error "UNIMPLEMENTED: string"
-
+string s _  = [String s]
 -- | Ignores the 'JSON' input and returns the given integer as a piece
 -- of 'JSON' in a one element list.
 --
@@ -41,7 +41,8 @@ string = error "UNIMPLEMENTED: string"
 --
 --  > [Number 1234]
 int :: Int -> Transformer
-int = error "UNIMPLEMENTED: int"
+int n _  = [Number n]
+
 
 -- HINT: these two functions are similar to the 'literal' function in
 -- the paper linked above.
@@ -68,7 +69,10 @@ int = error "UNIMPLEMENTED: int"
 --
 -- because 'Number 1' is not an array.
 elements :: Transformer
-elements = error "UNIMPLEMENTED: elements"
+elements o = case getElements o of 
+                Nothing -> []
+                Just element -> element 
+
 
 -- HINT: you can use the 'getElements' function from the 'JSON'
 -- module.
@@ -93,10 +97,13 @@ elements = error "UNIMPLEMENTED: elements"
 -- returns
 --
 --  > []
---
--- because the field "b" is not in the object.
+
 field :: String -> Transformer
-field = error "UNIMPLEMENTED: field"
+field s o = 
+    case getField s o of
+        Nothing -> []
+        Just value -> [value]
+
 
 -- HINT: use 'getField' from the 'JSON' module to define this
 -- function.
@@ -116,8 +123,9 @@ field = error "UNIMPLEMENTED: field"
 --             v3]   --g-->  [x5,          x5,
 --                            x6]]         x6]
 -- @@
+-- 
 pipe :: Transformer -> Transformer -> Transformer
-pipe = error "UNIMPLEMENTED: pipe"
+pipe x f g = 
 
 -- HINT: this function is the 'o' function in the paper linked above.
 
