@@ -123,9 +123,13 @@ field s o =
 --             v3]   --g-->  [x5,          x5,
 --                            x6]]         x6]
 -- @@
--- 
 pipe :: Transformer -> Transformer -> Transformer
-pipe x f g = 
+pipe f g = concat . map g . f
+
+-- concat . map f . g
+
+
+-- elements x returns [JSON] 
 
 -- HINT: this function is the 'o' function in the paper linked above.
 
@@ -150,7 +154,7 @@ pipe x f g =
 --
 --  > [Boolean False]
 equal :: Transformer -> Transformer -> Transformer
-equal = error "UNIMPLEMENTED: equal"
+equal = undefined
 
 -- HINT: the easiest way to write this function is to use a list
 -- comprehension (Week 4) to get all the pairs returned by the two
