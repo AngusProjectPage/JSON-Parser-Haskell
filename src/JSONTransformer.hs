@@ -124,7 +124,11 @@ field s o =
 --                            x6]]         x6]
 -- @@
 pipe :: Transformer -> Transformer -> Transformer
-pipe f g = concat . map g . f
+pipe f g = concat . map g . f 
+-- Above is equal to "pipe f g x = concat (map g (f x))"   
+
+
+
 
 -- concat . map f . g
 
@@ -154,7 +158,10 @@ pipe f g = concat . map g . f
 --
 --  > [Boolean False]
 equal :: Transformer -> Transformer -> Transformer
-equal = undefined
+equal t1 t2 xs | leftList == rightList = [Boolean True]
+               | otherwise = [Boolean False]
+                 where leftList  = [t1 a | a <- elements xs, if a == [] then a = xs]
+                       rightList = [t2 b | b <- elements xs, if a == [] then a = xs]
 
 -- HINT: the easiest way to write this function is to use a list
 -- comprehension (Week 4) to get all the pairs returned by the two
