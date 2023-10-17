@@ -158,10 +158,12 @@ pipe f g = concat . map g . f
 --
 --  > [Boolean False]
 equal :: Transformer -> Transformer -> Transformer
-equal t1 t2 xs | leftList == rightList = [Boolean True]
+equal t1 t2 xs | elements xs == [] && (t1 xs) == (t2 xs) = [Boolean True]
+               | elements xs == [] && (t1 xs) /= (t2 xs) = [Boolean False] 
+               | leftList == rightList = [Boolean True]
                | otherwise = [Boolean False]
-                 where leftList  = [t1 a | a <- elements xs, if a == [] then a = xs]
-                       rightList = [t2 b | b <- elements xs, if a == [] then a = xs]
+                 where leftList  = [t1 a | a <- elements xs]
+                       rightList = [t2 b | b <- elements xs]
 
 -- HINT: the easiest way to write this function is to use a list
 -- comprehension (Week 4) to get all the pairs returned by the two
