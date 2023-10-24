@@ -14,8 +14,15 @@ import Data.List (intersperse)
 -- Returns
 --
 -- >  "\"hello \\\"world\\\"\""
-renderString :: String -> String
-renderString = error "UNIMPLEMENTED: renderString"
+
+renderString :: String -> String 
+renderString str = "\"" ++ renderStringHelper str 
+
+renderStringHelper :: String -> String
+renderStringHelper ""        = "\"" 
+renderStringHelper ('"':xs)  = "\\\"" ++ renderStringHelper xs 
+renderStringHelper (x:xs)    = x : renderStringHelper xs  
+
 
 -- HINT: one way of doing the escaping is the same way that we did the
 -- htmlEscape function in the Week01 problems.
@@ -32,7 +39,13 @@ renderString = error "UNIMPLEMENTED: renderString"
 --
 --  > "{\"a\": 1, \"b\": 2}"
 renderJSON :: JSON -> String
-renderJSON = error "UNIMPLEMENTED: renderJSON"
+renderJSON (String s)      = renderString s
+renderJSON (Boolean False) =  
+renderJSON (Boolean True)
+renderJSON (Null)          = "null"
+renderJSON (Number n)      = n
+renderJSON (Array a)       = 
+renderJSON (Object o)      =   
 
 -- HINT: the `intersperse` function (imported above) is a good way of
 -- putting something between every element of a list. It is the
