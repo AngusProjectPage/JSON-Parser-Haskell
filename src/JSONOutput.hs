@@ -40,12 +40,14 @@ renderStringHelper (x:xs)    = x : renderStringHelper xs
 --  > "{\"a\": 1, \"b\": 2}"
 renderJSON :: JSON -> String
 renderJSON (String s)      = renderString s
-renderJSON (Boolean False) =  
-renderJSON (Boolean True)
+renderJSON (Boolean True)  = "true"
+renderJSON (Boolean False) = "false"
 renderJSON (Null)          = "null"
 renderJSON (Number n)      = n
 renderJSON (Array a)       = 
-renderJSON (Object o)      =   
+renderJSON (Object o)      = map fst o
+    
+     [("a",Number 1), ("b",Number 2)]
 
 -- HINT: the `intersperse` function (imported above) is a good way of
 -- putting something between every element of a list. It is the
