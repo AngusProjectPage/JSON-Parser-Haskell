@@ -43,11 +43,15 @@ renderJSON (String s)      = renderString s
 renderJSON (Boolean True)  = "true"
 renderJSON (Boolean False) = "false"
 renderJSON (Null)          = "null"
-renderJSON (Number n)      = n
-renderJSON (Array a)       = 
-renderJSON (Object o)      = map fst o
+renderJSON (Array a)       = "[" ++ concat(intersperse "," (map renderJSON a)) ++ "]" 
+renderJSON (Object o)      = ""
+
+ --["hello","true","null","false"]
+
+
+-- renderJSON (Object o)      = concat map (\x -> fst x ++ show (snd x)) o 
     
-     [("a",Number 1), ("b",Number 2)]
+     --[("a",Number 1), ("b",Number 2)]
 
 -- HINT: the `intersperse` function (imported above) is a good way of
 -- putting something between every element of a list. It is the
