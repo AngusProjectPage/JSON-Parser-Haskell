@@ -42,13 +42,14 @@ renderJSON :: JSON -> String
 renderJSON (String s)      = renderString s
 renderJSON (Boolean True)  = "true"
 renderJSON (Boolean False) = "false"
-renderJSON (Number n)      =  "4"
+renderJSON (Number n)      =  show n 
 renderJSON (Null)          = "null"
 renderJSON (Array a)       = "[" ++ concat(intersperse "," (map renderJSON a)) ++ "]" 
-renderJSON (Object o)      = concat(map (\(x,y) -> (renderString x, renderJSON y)) o) 
-
- --["hello","true","null","false"]
-
+renderJSON (Object o)      =  [[x,y] | (x,y) <- a]
+                              where a = (map (\(x,y) -> (renderString x, renderJSON y)) o) 
+                             -- [(\"a\", "1"), (\"b\", "2"), (\"c\", "3")]
+                             -- [x,y | (x,y) <- a] where a = 
+-- (Array [String "hello", Number 4, Null, Boolean False])
 
 -- renderJSON (Object o)   
     

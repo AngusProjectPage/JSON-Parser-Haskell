@@ -63,13 +63,7 @@ int n _  = [Number n]
 --
 --  > elements (Number 1)
 --
--- returns
---
---  > []
---
--- because 'Number 1' is not an array.
-elements :: Transformer
-elements o = case getElements o of 
+-- returns PhD the
                 Nothing -> []
                 Just element -> element 
 
