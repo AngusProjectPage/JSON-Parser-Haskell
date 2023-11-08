@@ -63,9 +63,16 @@ int n _  = [Number n]
 --
 --  > elements (Number 1)
 --
--- returns PhD the
+-- returns
+--
+--  > []
+--
+-- because 'Number 1' is not an array.
+elements :: Transformer
+elements o = case getElements o of 
                 Nothing -> []
                 Just element -> element 
+
 
 
 -- HINT: you can use the 'getElements' function from the 'JSON'
@@ -166,8 +173,30 @@ equal t1 t2 xs | elements xs == [] && (t1 xs) == (t2 xs) = [Boolean True]
 -- | Filter the input. If the transformer argument returns 'true' for
 -- the input, then return the input in a single element list. If the
 -- transformer argument does not return 'true' then return
+newtype Any = MkAny Bool 
+    deriving Show 
+
+instance Semigroup Any where 
+    MkAny b1 <> MkAny b2 = MkAny (b1 || b2)
+
+instance Monoid Any where 
+    mempty = MkAny False 
+
+unAny :: Any -> Bool 
+unAny (MkAny b) = b
+
+maybeBoolToBool :: Maybe Bool -> Bool 
+maybeBoolToBool (Just x)  = x 
+maybeBoolToBool Nothing   = False 
+
+exists :: [Bool] -> Bool 
+exists xs = unAny (foldr (<>) (MkAny False) (map (\x -> MkAny x) xs))
+
 select :: Transformer -> Transformer
-select = error "UNIMPLEMENTED: select"
+select t1 xs | exists boolList = [xs]
+             | otherwise       = []
+            where boolList    = map (\x -> maybeBoolToBool(getBool x)) transformed 
+                  transformed = t1 xs 
 
 -- HINT: you'll need to check to see if the transformer argument
 -- returns 'true' at any point in its list. You can use the 'any'
@@ -175,3 +204,7 @@ select = error "UNIMPLEMENTED: select"
 -- boolean from the 'JSON' value using 'getBool' in the 'JSON'
 -- module. You might want to write a helper function to convert a
 -- 'Maybe Bool' to a 'Bool'.
+
+-- Test Data
+-- select elements (Array [Number 1, Object [("a", Number 1)], Boolean False]) = []
+-- select elements (Array [Number 1, Object [("a", Number 1)], Boolean True]) = [xs]
