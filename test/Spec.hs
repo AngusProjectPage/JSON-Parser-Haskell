@@ -1,19 +1,8 @@
 import System.Exit
-import Test.QuickCheck as Check
+import Test.QuickCheck 
 import JSON 
 import JSONOutput (renderJSON)
 import JSONTransformer
-
-
-propReverse :: [Int] -> Bool 
-propReverse xs = reverse (reverse xs) == xs 
-
--- JSON Output --  
---prop_renderJSON 
-
-
--- Generators are built from
--- choose :: Random a => (a, a) -> Gen a
 
 
 instance Arbitrary JSON where
@@ -54,11 +43,16 @@ genSingleObjectList = do
     return [(key, value)]
 
 -- Test string function 
-prop_stringOnlyTransformedString :: String -> JSON -> Bool
-prop_stringOnlyTransformedString s json = string s json == [String s] 
+propOnlyTransformedString :: String -> JSON -> Bool
+propOnlyTransformedString s json = string s json == [String s] 
 
--- 
+-- Test int function 
+propOnlyTransformedInt :: Int -> JSON -> Bool 
+propOnlyTransformedInt i json = int i json == [Number i]
 
 
 main :: IO ()
-main = do quickCheck prop_stringOnlyTransformedString
+main = do 
+    quickCheck propOnlyTransformedString
+    quickCheck propOnlyTransformedInt
+
