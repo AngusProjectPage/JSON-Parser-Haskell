@@ -1,4 +1,4 @@
-module JSONTransformer (Transformer, field, select, pipe, string, int, equal, elements) where
+module JSONTransformer (Transformer, field, select, pipe, string, int, equal, elements, exists, maybeBoolToBool) where
 
 import JSON
 import GHC.Base (bindIO)
