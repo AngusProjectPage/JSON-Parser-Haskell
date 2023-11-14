@@ -1,5 +1,4 @@
 module JSONInput where
-
 import JSON
 import Result
 import ParserCombinators
@@ -7,7 +6,6 @@ import ParserCombinators
 -- This is the JSON parser from the Week08 notes, adjusted to work
 -- with the slightly different parser combinator API in
 -- ParserCombinators.
-
 
 parseJSONBool :: Parser Bool
 parseJSONBool =
