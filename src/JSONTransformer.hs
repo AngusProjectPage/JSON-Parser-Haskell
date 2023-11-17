@@ -1,7 +1,6 @@
-module JSONTransformer (Transformer, field, select, pipe, string, int, equal, elements, exists, maybeBoolToBool) where
-
+module JSONTransformer (Transformer, field, select, pipe, string, int, equal, elements, exists, maybeBoolToBool) where 
 import JSON
-import GHC.Base (bindIO)
+
 
 -- | A 'Transformer' is a function that takes a single 'JSON' value
 -- and returns a list of 'JSON' values.

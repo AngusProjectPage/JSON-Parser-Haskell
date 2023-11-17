@@ -1,7 +1,7 @@
 module JSONOutput where
 
 import JSON
-import Data.List (intersperse)
+import Data.List (intercalate)
 
 -- | Converts a 'String' into its string JSON representation by
 -- placing quotes around it and escaping any quote characters that
@@ -38,20 +38,36 @@ renderStringHelper (x:xs)    = x : renderStringHelper xs
 -- should give
 --
 --  > "{\"a\": 1, \"b\": 2}"
+{-
 renderJSON :: JSON -> String
 renderJSON (String s)      = renderString s
 renderJSON (Boolean True)  = "true"
 renderJSON (Boolean False) = "false"
 renderJSON (Number n)      =  show n 
-renderJSON (Null)          = "null"
-renderJSON (Array a)       = "[" ++ concat(intersperse ", " (map renderJSON a)) ++ "]" 
+renderJSON  Null           = "null"
+renderJSON (Array a)       = case a of 
+                              [] -> "[]"
+                              _ -> "[" ++ concat(intersperse ", " (map renderJSON a)) ++ "]" 
 renderJSON (Object o)      =  "{" ++ concat(intersperse ", " (concat(concat(b)))) ++ "}"
                               where a = (map (\(x,y) -> (renderString x, renderJSON y)) o) 
                                     b = [[[x ++ ": " ++ y]] | (x,y) <- a]
+                                    -}
                              -- [(\"a\", "1"), (\"b\", "2"), (\"c\", "3")]
                              -- [[\"a\": 1], ]
                              -- [x,y | (x,y) <- a] where a = 
 -- (Array [String "hello", Number 4, Null, Boolean False])
+
+renderJSON :: JSON -> String
+renderJSON (String s)      = renderString s
+renderJSON (Boolean True)  = "true"
+renderJSON (Boolean False) = "false"
+renderJSON (Number n)      = show n
+renderJSON Null            = "null"
+renderJSON (Array a)       = case a of
+                                [] -> "[]"
+                                _  -> "[" ++ intercalate ", " (map renderJSON a) ++ "]"
+renderJSON (Object o)      = "{" ++ intercalate ", " (map renderPair o) ++ "}"
+                              where renderPair (key, value) = renderString key ++ ": " ++ renderJSON value
 
 -- renderJSON (Object o)   
     

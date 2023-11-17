@@ -2,7 +2,7 @@ import System.Exit
 import Test.QuickCheck hiding (elements) 
 import JSON 
 import JSONOutput (renderJSON, renderString)
-import Data.List (intersperse)
+import Data.List (intercalate)
 import JSONTransformer
 
 
@@ -14,18 +14,18 @@ instance Arbitrary JSON where
 genJson :: Int -> Gen JSON
 genJson 0 = oneof
     [ String  <$> arbitrary 
-    , Boolean <$> arbitrary
+    , Boolean <$> arbitrary 
     , pure Null
-    , Number  <$> arbitrary
-    , Array   <$> genSingleItemJsonList
-    , Object  <$> genSingleObjectList 
+    , Number  <$> arbitrary 
+    , Array   <$> genSingleItemJsonArray 
+    , Object  <$> genSingleObject 
     ]
 
 genJson n = oneof
-    [ String  <$> arbitrary
-    , Boolean <$> arbitrary
+    [ String  <$> arbitrary  
+    , Boolean <$> arbitrary 
     , pure Null
-    , Number  <$> arbitrary
+    , Number  <$> arbitrary 
     , Array   <$> resize (n `div` 2) (listOf (genJson (n `div` 2)))
     , Object  <$> resize (n `div` 2) (listOf genObjectPair)
     ]
@@ -36,11 +36,13 @@ genObjectPair = do
     value <- genJson 3 -- Change the size of the value in the object
     return (key, value)
 
-genSingleItemJsonList = do
-    value <- genJson 0
+genSingleItemJsonArray :: Gen [JSON]
+genSingleItemJsonArray = do
+    value <- genJson 0 
     return [value]
 
-genSingleObjectList = do 
+genSingleObject :: Gen [(String, JSON)]
+genSingleObject = do 
     key <- arbitrary :: Gen String 
     value <- genJson 0 
     return [(key, value)]
@@ -76,9 +78,24 @@ propPipeString :: JSON -> String -> String -> Bool
 propPipeString j1 str1 str2 = pipe (string(str1)) (string(str2)) j1 == concat (map (string(str2)) (string(str1) j1)) 
 
 --Test equal function 
-propEqualInt :: JSON -> Int -> Int -> Bool 
-propEqualInt j1 int1 int2 = 
+propEqualString :: JSON -> String -> String -> Bool 
+propEqualString js str1 str2 | elements js == [] && (t1 js) == (t2 js) = [Boolean True]  == equal t1 t2 js
+                             | elements js == [] && (t1 js) /= (t2 js) = [Boolean False] == equal t1 t2 js
+                             | leftList    == rightList                = [Boolean True]  == equal t1 t2 js
+                             | otherwise                               = [Boolean False] == equal t1 t2 js 
+                            where 
+                                leftList  = [t1 a | a <- elements js]
+                                rightList = [t2 b | b <- elements js]
+                                t1 = string(str1) 
+                                t2 = string(str2) 
 
+-- Test select function 
+propSelect :: JSON -> Bool
+propSelect element | exists boolList = [element] == select transformer element
+                   | otherwise       = []        == select transformer element
+                        where
+                            boolList = map (\x -> maybeBoolToBool (getBool x)) (transformer element)
+                            transformer = elements   
 
 -- Testing JSON Output
 
@@ -87,16 +104,20 @@ propRenderJSON :: JSON -> Bool
 propRenderJSON (String s)      = renderJSON (String s)      == renderString s
 propRenderJSON (Boolean True)  = renderJSON (Boolean True)  == "true"
 propRenderJSON (Boolean False) = renderJSON (Boolean False) == "false"
-propRenderJSON (Number n)      = renderJSON (Number n)      == show n 
-propRenderJSON (Null)          = renderJSON Null            == "null"
-propRenderJSON (Array a)       = renderJSON (Array a)       == "[" ++ concat(intersperse ", " (map renderJSON a)) ++ "]" 
-propRenderJSON (Object o)      = renderJSON (Object o)      == "{" ++ concat(intersperse ", " (concat(concat(b)))) ++ "}"
-                                where a = (map (\(x,y) -> (renderString x, renderJSON y)) o) 
-                                      b = [[[x ++ ": " ++ y]] | (x,y) <- a] 
+propRenderJSON (Number n)      = renderJSON (Number n)      ==  show n 
+propRenderJSON  Null           = renderJSON Null            == "null"
+propRenderJSON (Array a)       = renderJSON (Array a)       == case a of
+                                                                    [] -> "[]"
+                                                                    _  -> "[" ++ intercalate ", " (map renderJSON a) ++ "]"
+propRenderJSON (Object o)      = renderJSON (Object o)      == "{" ++ intercalate ", " (map renderPair o) ++ "}"
+                                                                where
+                                                                     renderPair (key, value) = renderString key ++ ": " ++ renderJSON value
 
+   
 
--- Addition test cases 
+-- Testing QueryLanguage 
 
+-- Test query function 
 
 
 
@@ -104,9 +125,12 @@ main :: IO ()
 main = do 
     quickCheck propOnlyTransformedString
     quickCheck propOnlyTransformedInt
-    quickCheck propRenderJSON 
     quickCheck propElements
     quickCheck propField
     quickCheck propPipeInt
     quickCheck propPipeString
+    quickCheck propEqualString
+    quickCheck propSelect 
+    quickCheck propRenderJSON 
+
 
