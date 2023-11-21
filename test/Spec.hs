@@ -3,6 +3,7 @@ import Test.QuickCheck hiding (elements)
 import JSON 
 import JSONOutput (renderJSON, renderString)
 import Data.List (intercalate)
+import QueryLanguage 
 import JSONTransformer
 
 
@@ -46,6 +47,24 @@ genSingleObject = do
     key <- arbitrary :: Gen String 
     value <- genJson 0 
     return [(key, value)]
+
+
+instance Arbitrary Query where 
+    arbitrary = genQuery 
+
+genQuery :: Gen Query 
+genQuery = oneof 
+    [ Pipe        <$> genQuery <*> genQuery 
+    , Field       <$> arbitrary
+    , pure Elements 
+    , Select      <$> genQuery 
+    , ConstInt    <$> arbitrary 
+    , ConstString <$> arbitrary
+    , Equal       <$> genQuery <*> genQuery 
+    ]
+
+
+
 
 
 -- Testing JSON Transformer
@@ -117,8 +136,18 @@ propRenderJSON (Object o)      = renderJSON (Object o)      == "{" ++ intercalat
 
 -- Testing QueryLanguage 
 
--- Test query function 
 
+-- Test execute function 
+
+
+propExecute :: Query -> JSON -> Bool 
+propExecute (Pipe q1 q2) js      = execute (Pipe q1 q2) js      == pipe (execute q1) (execute q2) js
+propExecute (Field str)  js      = execute (Field str) js       == field str js 
+propExecute (Elements)   js      = execute (Elements) js        == elements js
+propExecute (Select q)   js      = execute (Select q) js        == select (execute q) js 
+propExecute (ConstInt i) js      = execute (ConstInt i) js      == int i js
+propExecute (ConstString str) js = execute (ConstString str) js == string str js
+propExecute (Equal q1 q2) js     = execute (Equal q1 q2) js     == equal (execute q1) (execute q2) js 
 
 
 main :: IO ()
@@ -132,5 +161,6 @@ main = do
     quickCheck propEqualString
     quickCheck propSelect 
     quickCheck propRenderJSON 
+    quickCheck propExecute 
 
 
