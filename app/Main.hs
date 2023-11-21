@@ -1,7 +1,6 @@
 module Main (main) where
 
 import System.Environment (getArgs)
-
 import JSONInput
 import JSONOutput
 import ParserCombinators (runParser)
@@ -13,25 +12,50 @@ import System.Directory
 query :: Query
 query = Elements `Pipe` Select (Field "Country" `Equal` ConstString "S")
 
+getQuery :: [String] -> [String] 
+getQuery (x:xs) = if (x /= "q") then getQuery else       
+  -- Look for flag, once true, take elements until another flag is found then finish 
+
+getFiles :: [String] -> [String] 
+getFiles = filter (\x -> strTake 2 == "-f") 
+
+getStrings :: [String] -> [String] 
+getStrings = filter (\x -> strTake 2 /= "-f") 
+
+filesExist :: [String] -> Bool 
+filesExist xs = all (==True) (map doesFileExist xs)
+
+readFiles :: [String] -> [String] 
+readFiles xs = map readFile xs 
+
+-- Command is entered in format -q Query -f <Files> -a <Arguments>
+-- Query comes after -q flag
+-- Files come after -f flag 
+-- Arguments come after -a flag   
 main :: IO ()
 main =
   do -- Get the JSON filename to read from the command line arguments.
      --
      -- FIXME: What if
      -- we want to include additional command line options?
-     [filename] <- getArgs
-     fileExist  <- doesFileExist filename 
-     rawText    <- if fileExist then readFile filename else die "Error: File path does not exist, please enter a valid file path";
-     -- Read the raw data in from the file given.
-     --
-     -- FIXME: What if the user wants to query several JSON files?
-     rawText <- readFile filename
+
+     -- Get files and arguments 
+     [args]   <- getArgs 
+     [query]  <- getQuery args  
+     [files]  <- getFiles args
+     [args]   <- getArgs args
+
+     -- Check if all the files exist 
+     [filesExist] <- filesExist files 
+     [rawText]    <- if filesExist then readFiles files else die "Error: File path does not exist, please enter a valid file path";
+
 
      -- Parse the raw text of the input into a structured JSON
      -- representation.
      --
      -- FIXME: what if the user wants to
      inputJSON <- abortOnError (stringToJSON rawText)
+     query <- 
 
      -- Run the query on the parsed JSON to a list of JSON values
      --
