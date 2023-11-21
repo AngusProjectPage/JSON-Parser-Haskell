@@ -41,6 +41,7 @@ executable json-query
   build-depends:
       CS316Coursework2023
     , base >=4.7 && <5
+    , directory
   default-language: Haskell2010
 
 test-suite CS316Coursework2023-test
