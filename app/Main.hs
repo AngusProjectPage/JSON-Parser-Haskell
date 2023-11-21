@@ -7,6 +7,7 @@ import JSONOutput
 import ParserCombinators (runParser)
 import QueryLanguage
 import Result
+import System.Directory (doesFileExist) 
 
 query :: Query
 query = Elements `Pipe` Select (Field "Country" `Equal` ConstString "S")
@@ -19,7 +20,9 @@ main =
      -- a user friendly error if the filename is not present? What if
      -- we want to include additional command line options?
      [filename] <- getArgs
-
+     fileExist  <- doesFileExist filename 
+     if(fileExist == False) then putStrLn ("File does not exist please enter a valid file path");
+     else 
      -- Read the raw data in from the file given.
      --
      -- FIXME: What if the user wants to query several JSON files?
