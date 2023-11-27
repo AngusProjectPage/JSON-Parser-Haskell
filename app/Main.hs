@@ -3,78 +3,81 @@ module Main (main) where
 import System.Environment (getArgs)
 import JSONInput
 import JSONOutput
-import ParserCombinators (runParser)
+import ParserCombinators 
 import QueryLanguage
 import Result
 import System.Exit 
 import System.Directory 
+import System.IO 
 
-query :: Query
-query = Elements `Pipe` Select (Field "Country" `Equal` ConstString "S")
 
-getQuery :: [String] -> [String] 
-getQuery (x:xs) = if (x /= "q") then getQuery else       
-  -- Look for flag, once true, take elements until another flag is found then finish 
+parseQuery :: Parser String 
+parseQuery = MkParser parser 
+  where 
+    parser ('-':'q':query) = span (\c -> c /= '-') query -- Result (query, leftovers)
 
-getFiles :: [String] -> [String] 
-getFiles = filter (\x -> strTake 2 == "-f") 
+-- parseFile takes parseQuery as it's input 
+parseFile :: String -> Parser String 
+parseFile str = do 
+  (query, restOfString) <- parseQuery str
+  files <- words(drop 2 restOfString)
+  return $ Ok (query, files)
+  
 
-getStrings :: [String] -> [String] 
-getStrings = filter (\x -> strTake 2 /= "-f") 
+input :: String
+input = "-q Elements `Pipe` Select (Field 'Country' `Equal` ConstString 'S') -f data/hills.json"
 
-filesExist :: [String] -> Bool 
-filesExist xs = all (==True) (map doesFileExist xs)
 
-readFiles :: [String] -> [String] 
-readFiles xs = map readFile xs 
-
--- Command is entered in format -q Query -f <Files> -a <Arguments>
--- Query comes after -q flag
--- Files come after -f flag 
--- Arguments come after -a flag   
 main :: IO ()
 main =
   do -- Get the JSON filename to read from the command line arguments.
-     --
-     -- FIXME: What if
-     -- we want to include additional command line options?
+    --
+    -- FIXME: What if
+    -- we want to include additional command line options?
 
-     -- Get files and arguments 
-     [args]   <- getArgs 
-     [query]  <- getQuery args  
-     [files]  <- getFiles args
-     [args]   <- getArgs args
+    -- Get files and arguments 
+    
+    commandLine <- getArgs 
+    case runParser parseCommandLine input of 
+      Ok (query, files) -> do 
+        putStrLn show query 
+        putStrLn show files 
+      Error msg -> putStrLn "err"
 
-     -- Check if all the files exist 
-     [filesExist] <- filesExist files 
-     [rawText]    <- if filesExist then readFiles files else die "Error: File path does not exist, please enter a valid file path";
 
+    
+    -- Check if all the files exist 
+    -- FIX ME
+    --rawText <- readFile args 
+    
+    -- Parse the raw text of the input into a structured JSON
+    -- representation.
+    --
+    -- FIXME: what if the user wants to
+    --inputJSON <- abortOnError (stringToJSON rawText)
 
-     -- Parse the raw text of the input into a structured JSON
-     -- representation.
-     --
-     -- FIXME: what if the user wants to
-     inputJSON <- abortOnError (stringToJSON rawText)
-     query <- 
-
-     -- Run the query on the parsed JSON to a list of JSON values
-     --
-     -- FIXME: What if the user wants a different query? the query
-     -- should be taken as an input as well.
-     --
-     -- FIXME: the query langauge is quite inexpressive. What if the
-     -- user wants all hills over 1000 metres in Scotland and Wales?
-     -- or something else? What if they want to transform the input
-     -- and not just filter it?
-     --
-     -- FIXME: The query might be incompatible with the input data. It
-     -- might mention fields that the input does not have. Can these
-     -- errors be reported back to the user nicely?
-     let outputJSONs = execute query inputJSON
-
-     -- Print the output, one per line.
-     --
-     -- FIXME: what if the user wants the JSON output to be nicely
-     -- formatted? Or in colour? Or in another format, like HTML or
-     -- CSV?
-     mapM_ (putStrLn . renderJSON) outputJSONs
+    -- Run the query on the parsed JSON to a list of JSON values
+    --
+    -- FIXME: What if the user wants a different query? the query
+    -- should be taken as an input as well.
+    --
+    -- FIXME: the query langauge is quite inexpressive. What if the
+    -- user wants all hills over 1000 metres in Scotland and Wales?
+    -- or something else? What if they want to transform the input
+    -- and not just filter it?
+    --
+    -- FIXME: The query might be incompatible with the input data. It
+    -- might mention fields that the input does not have. Can these
+    -- errors be reported back to the user nicely?
+    --let outputJSONs = execute query inputJSON
+    {- 
+    let outputJSONs = case query options of
+                    Just q -> execute q inputJSON
+                    Nothing -> execute query 
+    -}
+    -- Print the output, one per line.
+    --
+    -- FIXME: what if the user wants the JSON output to be nicely
+    -- formatted? Or in colour? Or in another format, like HTML or
+    -- CSV?
+    --mapM_ (putStrLn . renderJSON) outputJSONs
