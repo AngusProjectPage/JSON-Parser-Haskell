@@ -12,16 +12,19 @@ import System.IO
 
 
 parseQuery :: Parser String 
-parseQuery = MkParser parser 
-  where 
-    parser ('-':'q':query) = span (\c -> c /= '-') query -- Result (query, leftovers)
+parseQuery = MkParser (\input -> 
+                        case input of 
+                          ('-':'q':query) -> Ok(span (\c -> c /= '-') query)
+                          _ -> Error "Input must start with -q flag")
 
 -- parseFile takes parseQuery as it's input 
-parseFile :: String -> Parser String 
-parseFile str = do 
-  (query, restOfString) <- parseQuery str
-  files <- words(drop 2 restOfString)
-  return $ Ok (query, files)
+parseCommandLine :: String -> Parser (String, [String]) 
+parseCommandLine str = do 
+  case runParser parseQuery str of 
+    Ok (query, restOfString) -> do 
+      let files = words(drop 2 restOfString)
+      return (query, files) 
+    Error msg -> failParse msg 
   
 
 input :: String
@@ -36,16 +39,13 @@ main =
     -- we want to include additional command line options?
 
     -- Get files and arguments 
-    
     commandLine <- getArgs 
     case runParser parseCommandLine input of 
       Ok (query, files) -> do 
-        putStrLn show query 
-        putStrLn show files 
-      Error msg -> putStrLn "err"
-
-
-    
+        putStrLn query 
+        putStrLn files 
+      Error msg -> putStrLn msg
+      
     -- Check if all the files exist 
     -- FIX ME
     --rawText <- readFile args 
