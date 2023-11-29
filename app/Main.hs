@@ -52,7 +52,7 @@ parseCommandLine :: Parser (String,[String])
 parseCommandLine = 
   do 
      parseDashAndQuery -- This outputs a parser of ((), Query+Files) 
-     query <- command  -- This outputs a parser of (Query, and the rest)
+     query <- command   -- This outputs a parser of (Query, and the rest)
      parseDashAndFiles -- This outputs a parser of ((), Files) 
      files <- sepBy whitespace command -- This outputs a parser of ((), Files)
      return (query,files)  -- No input is consumed due to it being a monad 
@@ -75,7 +75,7 @@ main =
     let result = runParser parseCommandLine singleArgString
     case result of
       Ok (parsedOutput,leftover) ->
-        putStrLn $ "Query Parsed: " ++ show (fst parsedOutput) ++ ", Files Parsed: " ++ show (snd parsedOutput)
+        putStrLn $ "Query Parsed: " ++ (fst parsedOutput) ++ ", Files Parsed: " ++ show (snd parsedOutput)
         --inputJSON <- abortOnError (stringToJSON (head FileParser))
         --let outputJSONs = execute query inputJSON 
         --mapM_ (putStrLn . renderJSON) outputJSONs
