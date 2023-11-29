@@ -54,7 +54,7 @@ parseCommandLine =
      query <- command  -- This outputs a parser of (Query, and the rest)
      parseDashAndFiles -- This outputs a parser of ((), Files) 
      [files] <- command sepBy whitespace -- This outputs a parser of ((), Files)
-     return (query, files)  
+     return (query, files)  -- No input is consumed due to it being a monad 
 
 query :: Query
 query = Elements `Pipe` Select (Field "Height" `LessThan` ConstInt 30)
@@ -71,7 +71,12 @@ main =
     -}
     [queryAndFiles] <- getArgs -- returns a list of the query and arguments
     singleArgString <- unwords queryAndFiles
-    (query,files) <- parseCommandLine singleArgString
+    let result = runParser parseCommandLine singleArgString
+    case result of
+    Ok (QueryParser, FileParser, LeftOver) ->
+      putStrLn $ "Query Parsed: " ++ show QueryParser ++ ", Files Parsed: " ++ show FileParser
+    Error errorMessage ->
+      putStrLn $ "Parsing error: " ++ errorMessage
     -- Check if all the files exist 
     -- FIX ME
     -- rawText <- readFile filename 
