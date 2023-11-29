@@ -10,25 +10,63 @@ import System.Exit
 import System.Directory 
 import System.IO 
 
+-- Parser for command line options
+-- newtype Parser a = MkParser (String -> Result (a, String))
 
-parseQuery :: Parser String 
-parseQuery = MkParser (\input -> 
-                        case input of 
-                          ('-':'q':query) -> Ok(span (\c -> c /= '-') query)
-                          _ -> Error "Input must start with -q flag")
+{-
+parseDashAndQuery :: Parser () 
+parseDashAndQuery = do 
+  whitespaces
+  isChar '-' 
+  isChar 'q'
+  whitespaces
 
--- parseFile takes parseQuery as it's input 
-parseCommandLine :: String -> Parser (String, [String]) 
-parseCommandLine str = do 
-  case runParser parseQuery str of 
-    Ok (query, restOfString) -> do 
-      let files = words(drop 2 restOfString)
-      return (query, files) 
-    Error msg -> failParse msg 
-  
+parseDashAndFiles :: Parser () 
+parseDashAndFiles = do 
+  whitespaces
+  isChar '-' 
+  isChar 'f'
+  whitespaces
 
-input :: String
-input = "-q Elements `Pipe` Select (Field 'Country' `Equal` ConstString 'S') -f data/hills.json"
+{-
+parseDashAndArguments :: Parser () 
+parseDashAndArguments = do 
+  whitespaces
+  isChar '-' 
+  isChar 'a'
+  whitespaces
+-}
+-}
+
+     -- Places all the spaces into (text, ()) second part of tuple
+{-
+noDash :: Parser Char
+noDash =
+  do c <- char
+     case c of
+       '-'  -> failParse ""
+       c    -> return c
+
+command :: Parser String
+command =
+  do cs <- zeroOrMore noDash
+     return cs
+
+-- Separated by the flags
+parseCommandLine :: Parser (String,[String])
+parseCommandLine = 
+  do 
+     parseDashAndQuery 
+     query <- command 
+     parseDashAndFiles
+     files <- command sepBy whitespace 
+     return (query, files)  
+
+-}
+
+query :: Query
+query = Elements `Pipe` Select (Field "Height" `LessThan` ConstInt 30)
+
 
 
 main :: IO ()
@@ -37,18 +75,15 @@ main =
     --
     -- FIXME: What if
     -- we want to include additional command line options?
-
-    -- Get files and arguments 
-    commandLine <- getArgs 
-    case runParser parseCommandLine input of 
-      Ok (query, files) -> do 
-        putStrLn query 
-        putStrLn files 
-      Error msg -> putStrLn msg
+    {-
+    (query, files, remainder) <- runParser parseCommandLine input
+    putStrLn query  
+    -}
+    [filename] <- getArgs 
       
     -- Check if all the files exist 
     -- FIX ME
-    --rawText <- readFile args 
+    rawText <- readFile filename 
     
     -- Parse the raw text of the input into a structured JSON
     -- representation.
@@ -69,14 +104,11 @@ main =
     -- FIXME: The query might be incompatible with the input data. It
     -- might mention fields that the input does not have. Can these
     -- errors be reported back to the user nicely?
-    --let outputJSONs = execute query inputJSON
-    {- 
-    let outputJSONs = case query options of
-                    Just q -> execute q inputJSON
-                    Nothing -> execute query 
-    -}
+    inputJSON <- abortOnError (stringToJSON rawText)
     -- Print the output, one per line.
-    --
+    let outputJSONs = execute query inputJSON 
+
+    mapM_ (putStrLn . renderJSON) outputJSONs
     -- FIXME: what if the user wants the JSON output to be nicely
     -- formatted? Or in colour? Or in another format, like HTML or
     -- CSV?

@@ -1,4 +1,4 @@
-module JSONTransformer (Transformer, field, select, pipe, string, int, equal, elements, exists, maybeBoolToBool) where 
+module JSONTransformer (Transformer, field, select, pipe, string, int, equal, elements, exists, maybeBoolToBool, greaterThan, lessThan) where 
 import JSON
 
 
@@ -196,6 +196,19 @@ select t1 xs | exists boolList = [xs]
              | otherwise       = []
             where boolList    = map (\x -> maybeBoolToBool(getBool x)) transformed 
                   transformed = t1 xs 
+
+
+greaterThan :: Transformer -> Transformer -> Transformer
+greaterThan t1 t2 xs | elements xs == [] && (t1 xs) > (t2 xs) = [Boolean True]
+                     | otherwise = [Boolean False]
+                        where leftList  = [t1 a | a <- elements xs]
+                              rightList = [t2 b | b <- elements xs]
+
+lessThan :: Transformer -> Transformer -> Transformer
+lessThan t1 t2 xs    | elements xs == [] && (t1 xs) < (t2 xs) = [Boolean True]
+                     | otherwise = [Boolean False]
+                        where leftList  = [t1 a | a <- elements xs]
+                              rightList = [t2 b | b <- elements xs]
 
 -- HINT: you'll need to check to see if the transformer argument
 -- returns 'true' at any point in its list. You can use the 'any'

@@ -10,6 +10,8 @@ data Query
   | ConstInt    Int
   | ConstString String
   | Equal       Query Query
+  | GreaterThan Query Query
+  | LessThan    Query Query  
   deriving Show
 
 -- | Executes a 'Query' by translating it into a `Transformer`. Each
@@ -33,6 +35,8 @@ execute (Select q)        = select (execute q)
 execute (ConstInt i)      = int i
 execute (ConstString str) = string str 
 execute (Equal q1 q2)     = equal (execute q1) (execute q2) 
+execute (GreaterThan q1 q2) = greaterThan (execute q1) (execute q2) 
+execute (LessThan q1 q2)    = lessThan (execute q1) (execute q2) 
 
 -- HINT: this function is very similar to the 'eval' function for
 -- evaluating Boolean formulas defined in the Week03 problems.
