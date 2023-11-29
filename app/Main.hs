@@ -47,17 +47,18 @@ command =
   do cs <- zeroOrMore noDash
      return cs 
 
+-- String -> Result (String, [String], Leftover)
 parseCommandLine :: Parser (String,[String])
 parseCommandLine = 
   do 
      parseDashAndQuery -- This outputs a parser of ((), Query+Files) 
      query <- command  -- This outputs a parser of (Query, and the rest)
      parseDashAndFiles -- This outputs a parser of ((), Files) 
-     [files] <- command sepBy whitespace -- This outputs a parser of ((), Files)
-     return (query, files)  -- No input is consumed due to it being a monad 
+     files <- sepBy whitespace command -- This outputs a parser of ((), Files)
+     return (query,files)  -- No input is consumed due to it being a monad 
 
-query :: Query
-query = Elements `Pipe` Select (Field "Height" `LessThan` ConstInt 30)
+--query :: Query
+--query = Elements `Pipe` Select (Field 'Height' `LessThan` ConstInt 30)
 
 main :: IO ()
 main =
@@ -69,14 +70,17 @@ main =
     (query, files, remainder) <- runParser parseCommandLine input
     putStrLn query  
     -}
-    [queryAndFiles] <- getArgs -- returns a list of the query and arguments
-    singleArgString <- unwords queryAndFiles
+    [singleArgString] <- getArgs -- returns a list of the query and arguments
+    putStrLn singleArgString
     let result = runParser parseCommandLine singleArgString
     case result of
-    Ok (QueryParser, FileParser, LeftOver) ->
-      putStrLn $ "Query Parsed: " ++ show QueryParser ++ ", Files Parsed: " ++ show FileParser
-    Error errorMessage ->
-      putStrLn $ "Parsing error: " ++ errorMessage
+      Ok (parsedOutput,leftover) ->
+        putStrLn $ "Query Parsed: " ++ show (fst parsedOutput) ++ ", Files Parsed: " ++ show (snd parsedOutput)
+        --inputJSON <- abortOnError (stringToJSON (head FileParser))
+        --let outputJSONs = execute query inputJSON 
+        --mapM_ (putStrLn . renderJSON) outputJSONs
+      Error errorMessage ->
+        putStrLn $ "Parsing error: " ++ errorMessage
     -- Check if all the files exist 
     -- FIX ME
     -- rawText <- readFile filename 
@@ -100,11 +104,7 @@ main =
     -- FIXME: The query might be incompatible with the input data. It
     -- might mention fields that the input does not have. Can these
     -- errors be reported back to the user nicely?
-    inputJSON <- abortOnError (stringToJSON rawText)
-    -- Print the output, one per line.
-    let outputJSONs = execute query inputJSON 
 
-    mapM_ (putStrLn . renderJSON) outputJSONs
     -- FIXME: what if the user wants the JSON output to be nicely
     -- formatted? Or in colour? Or in another format, like HTML or
     -- CSV?
