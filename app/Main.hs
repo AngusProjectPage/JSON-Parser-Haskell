@@ -11,15 +11,14 @@ import System.Directory
 import System.IO 
 
 -- Parser for command line options
--- newtype Parser a = MkParser (String -> Result (a, String))
-
-{-
+-- newtype Parser a = MkParser (String -> Result (a, String)) -- So a stores parsed out stuff 
+-- String stores the stuff to go into the next parser 
 parseDashAndQuery :: Parser () 
 parseDashAndQuery = do 
   whitespaces
   isChar '-' 
   isChar 'q'
-  whitespaces
+  whitespaces 
 
 parseDashAndFiles :: Parser () 
 parseDashAndFiles = do 
@@ -28,18 +27,14 @@ parseDashAndFiles = do
   isChar 'f'
   whitespaces
 
-{-
+
 parseDashAndArguments :: Parser () 
 parseDashAndArguments = do 
-  whitespaces
+  whitespaces 
   isChar '-' 
   isChar 'a'
   whitespaces
--}
--}
 
-     -- Places all the spaces into (text, ()) second part of tuple
-{-
 noDash :: Parser Char
 noDash =
   do c <- char
@@ -50,24 +45,19 @@ noDash =
 command :: Parser String
 command =
   do cs <- zeroOrMore noDash
-     return cs
+     return cs 
 
--- Separated by the flags
 parseCommandLine :: Parser (String,[String])
 parseCommandLine = 
   do 
-     parseDashAndQuery 
-     query <- command 
-     parseDashAndFiles
-     files <- command sepBy whitespace 
+     parseDashAndQuery -- This outputs a parser of ((), Query+Files) 
+     query <- command  -- This outputs a parser of (Query, and the rest)
+     parseDashAndFiles -- This outputs a parser of ((), Files) 
+     [files] <- command sepBy whitespace -- This outputs a parser of ((), Files)
      return (query, files)  
-
--}
 
 query :: Query
 query = Elements `Pipe` Select (Field "Height" `LessThan` ConstInt 30)
-
-
 
 main :: IO ()
 main =
@@ -79,11 +69,12 @@ main =
     (query, files, remainder) <- runParser parseCommandLine input
     putStrLn query  
     -}
-    [filename] <- getArgs 
-      
+    [queryAndFiles] <- getArgs -- returns a list of the query and arguments
+    singleArgString <- unwords queryAndFiles
+    (query,files) <- parseCommandLine singleArgString
     -- Check if all the files exist 
     -- FIX ME
-    rawText <- readFile filename 
+    -- rawText <- readFile filename 
     
     -- Parse the raw text of the input into a structured JSON
     -- representation.
