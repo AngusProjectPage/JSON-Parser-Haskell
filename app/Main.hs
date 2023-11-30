@@ -58,6 +58,8 @@ noDashList =
        ' ' -> failParse ""
        c -> return c 
 
+removeList :: [Query] -> Query 
+removeList [query] = query 
 
 
 parseCommandLine :: Parser ([Query],[String])
@@ -190,13 +192,11 @@ main =
     -- Check parsed result 
     case result of
       Ok (parsedOutput,leftover) ->
-        -- Print parsed result to console
         do 
-          putStrLn (show(parsedOutput))
-         -- putStrLn $ "Query Parsed: " ++ show (fst parsedOutput) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
-        --inputJSON <- abortOnError (stringToJSON readFile((head(snd(parsedOutput)))))
-        --let outputJSONs = execute (fst parsedOutput) inputJSON 
-        --mapM_ (putStrLn . renderJSON) outputJSONs
+          rawText <- readFile(head(snd parsedOutput))
+          inputJSON <- abortOnError (stringToJSON rawText)
+          let outputJSONs = execute (removeList(fst parsedOutput)) inputJSON 
+          mapM_ (putStrLn . renderJSON) outputJSONs
       Error errorMessage ->
         putStrLn $ "Parsing error: " ++ errorMessage
 
