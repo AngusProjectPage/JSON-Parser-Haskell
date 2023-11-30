@@ -24,7 +24,7 @@ parseDashAndQuery = do
   whitespaces
   isChar '-' 
   isChar 'q'
-  whitespaces 
+  whitespaces
 
 parseDashAndFiles :: Parser () 
 parseDashAndFiles = do 
@@ -55,41 +55,43 @@ noDashList =
        ' ' -> failParse ""
        c -> return c 
 
-command :: Parser Query
+command :: Parser String
 command =
   do cs <- zeroOrMore noDash
-     return (parseQuery cs)
+     return cs  -- Parse the input String as a query and return 
 
 
-parseCommandLine :: Parser (Query,[String])
+parseCommandLine :: Parser ([String],[String])
 parseCommandLine = 
   do 
      parseDashAndQuery -- This outputs a parser of ((), Query+Files) 
-     query <- command   -- This outputs a parser of (Query, and the rest)
+     query <- sepBy whitespace (zeroOrMore noDashList)
      parseDashAndFiles -- This outputs a parser of ((), Files) 
      files <- sepBy whitespace (zeroOrMore noDashList) -- This outputs a parser of ((), Files)
      return (query,files)  -- No input is consumed due to it being a monad
 
 identifier2 :: Parser String
 identifier2 =
-  do cs <- (satisfies "alphanumeric character" isAlphaNum)
-     return cs
-  `orElse`
-  failParse "Expecting an identifier"
+  oneOrMore (satisfies "alphanumeric character" isAlphaNum)
+
+stringToQuery :: String -> Result Query
+stringToQuery = completeParse parseQuery
 
 
-parseQuery :: Parser Query  -- Elements `Pipe` Select (Field 'Height' `LessThan` ConstInt 30)
-parseQuery =    --
+parseQuery :: Parser Query
+parseQuery =    
   do 
      whitespaces
      stringLiteral "Elements"
-     return (Elements)
+     whitespaces
+     return Elements
   `orElse`
   do 
      whitespaces 
      stringLiteral "Field"
      whitespace
-     fd <- identifier2 
+     fd <- identifier2
+     whitespaces 
      return (Field fd)
   `orElse`
   do 
@@ -97,6 +99,7 @@ parseQuery =    --
      stringLiteral "ConstInt"
      whitespace
      ci <- number
+     whitespaces
      return (ConstInt ci)
   `orElse`
   do 
@@ -104,12 +107,15 @@ parseQuery =    --
     stringLiteral "ConstString"
     whitespace
     cs <- identifier2
+    whitespaces
     return (ConstString cs)
   `orElse`
   do 
      whitespaces
      stringLiteral "Select"
+     whitespace
      item <- parseQuery 
+     whitespaces
      return (Select item)
   `orElse`
   do 
@@ -119,6 +125,7 @@ parseQuery =    --
      item1 <- parseQuery
      whitespace
      item2 <- parseQuery
+     whitespaces
      return (Equal item1 item2)
   `orElse`
   do 
@@ -128,6 +135,7 @@ parseQuery =    --
      item1 <- parseQuery
      whitespace
      item2 <- parseQuery
+     whitespaces
      return (Pipe item1 item2)
   `orElse`
   do 
@@ -137,6 +145,7 @@ parseQuery =    --
      item1 <- parseQuery
      whitespace
      item2 <- parseQuery
+     whitespaces
      return (GreaterThan item1 item2)
   `orElse`
   do 
@@ -146,12 +155,10 @@ parseQuery =    --
      item1 <- parseQuery
      whitespace
      item2 <- parseQuery
+     whitespaces
      return (LessThan item1 item2)
   `orElse`
   failParse "Couldn't parse Query"
-
-
-
 
 --query :: Query
 --query = Elements `Pipe` Select (Field 'Height' `LessThan` ConstInt 30)
@@ -171,7 +178,7 @@ main =
     case result of
       Ok (parsedOutput,leftover) ->
         -- Print parsed result to console
-        putStrLn $ "Query Parsed: " ++ show (fst parsedOutput) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
+        putStrLn $ "Query Parsed: " ++ show (mapM_ stringToQuery (fst parsedOutput)) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
         --inputJSON <- abortOnError (stringToJSON readFile((head(snd(parsedOutput)))))
         --let outputJSONs = execute (fst parsedOutput) inputJSON 
         --mapM_ (putStrLn . renderJSON) outputJSONs
