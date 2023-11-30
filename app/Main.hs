@@ -69,81 +69,105 @@ parseCommandLine =
      files <- sepBy whitespace (zeroOrMore noDashList) -- This outputs a parser of ((), Files)
      return (query,files)  -- No input is consumed due to it being a monad
 
+
+whitespaceAndBracket :: Parser ()
+whitespaceAndBracket = do satisfies "No whitespace or bracket" (\c -> c == ' ' || c == '\n' || c == '\t' || c == '(' || c == ')')
+                          return ()
+
+-- | Parser for removing both whitespaces and brackets 
+whitespaceAndBrackets :: Parser ()
+whitespaceAndBrackets = do zeroOrMore whitespaceAndBracket
+                           return ()
+
+
+rmBracket :: Parser ()
+rmBracket = do satisfies "Brackets" (\c -> c == '(' || c == ')')
+               return ()
+
+-- | Parser for removing both whitespaces and brackets 
+rmBrackets :: Parser ()
+rmBrackets = do zeroOrMore rmBracket
+                return ()
+
 --  Pipe Elements Select Equal Field 'Country' ConstString "S"
 parseQuery :: Parser Query
 parseQuery =    
   do 
-     whitespaces
+     whitespaceAndBrackets
      stringLiteral "Elements"
-     whitespaces
+     whitespaceAndBrackets
      return Elements
   `orElse`
   do 
-     whitespaces 
+     whitespaceAndBrackets
      stringLiteral "Field"
-     whitespace
+     whitespaceAndBrackets
      fd <- quotedString 
-     whitespaces 
+     whitespaceAndBrackets
      return (Field fd)
   `orElse`
   do 
-     whitespaces 
+     whitespaceAndBrackets
      stringLiteral "ConstInt"
-     whitespace
+     whitespaceAndBrackets
      ci <- number
-     whitespaces
+     whitespaceAndBrackets
      return (ConstInt ci)
   `orElse`
   do 
-    whitespaces
+    whitespaceAndBrackets
     stringLiteral "ConstString"
-    whitespace
+    whitespaceAndBrackets
     cs <- quotedString
-    whitespaces
+    whitespaceAndBrackets
     return (ConstString cs)
   `orElse`
   do 
-     whitespaces
+     whitespaceAndBrackets
      stringLiteral "Select"
-     whitespace
+     whitespaceAndBrackets
      item <- parseQuery 
-     whitespaces
+     whitespaceAndBrackets
      return (Select item)
   `orElse`
   do 
-     whitespaces
+     whitespaceAndBrackets
      stringLiteral "Equal"
-     whitespace
+     whitespaceAndBrackets
      item1 <- parseQuery
+     rmBrackets
      item2 <- parseQuery
-     whitespaces
+     whitespaceAndBrackets
      return (Equal item1 item2)
   `orElse`
   do 
-     whitespaces
+     whitespaceAndBrackets
      stringLiteral "Pipe"
-     whitespace
+     whitespaceAndBrackets
      item1 <- parseQuery
+     rmBrackets
      item2 <- parseQuery
-     whitespaces
+     whitespaceAndBrackets
      return (Pipe item1 item2)
   `orElse`
   do 
-     whitespaces
+     whitespaceAndBrackets
      stringLiteral "GreaterThan"
-     whitespace
+     whitespaceAndBrackets
      item1 <- parseQuery
+     rmBrackets
      item2 <- parseQuery
-     whitespaces
+     whitespaceAndBrackets
      return (GreaterThan item1 item2)
   `orElse`
   do 
-     whitespaces
+     whitespaceAndBrackets
      stringLiteral "LessThan"
-     whitespace
+     whitespaceAndBrackets
      item1 <- parseQuery
+     rmBrackets
      item2 <- parseQuery
-     whitespaces
+     whitespaceAndBrackets
      return (LessThan item1 item2)
   `orElse`
   failParse "Couldn't parse Query"
@@ -151,6 +175,7 @@ parseQuery =
 --query :: Query
 --query = Elements `Pipe` Select (Field 'Height' `LessThan` ConstInt 30)
 
+--newQuery = Pipe (Elements) (Select (LessThan (Field \"Height\") (ConstInt 30)))
 
 -- When entering query infix notation is not permitted in this program
 main :: IO ()
