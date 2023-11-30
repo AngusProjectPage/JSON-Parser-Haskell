@@ -61,11 +61,11 @@ command =
      return cs  -- Parse the input String as a query and return 
 
 
-parseCommandLine :: Parser ([String],[String])
+parseCommandLine :: Parser ([Query],[String])
 parseCommandLine = 
   do 
      parseDashAndQuery -- This outputs a parser of ((), Query+Files) 
-     query <- sepBy whitespace (zeroOrMore noDashList)
+     query <- sepBy parseQuery (zeroOrMore noDashList)
      parseDashAndFiles -- This outputs a parser of ((), Files) 
      files <- sepBy whitespace (zeroOrMore noDashList) -- This outputs a parser of ((), Files)
      return (query,files)  -- No input is consumed due to it being a monad
@@ -178,7 +178,9 @@ main =
     case result of
       Ok (parsedOutput,leftover) ->
         -- Print parsed result to console
-        putStrLn $ "Query Parsed: " ++ show (mapM_ stringToQuery (fst parsedOutput)) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
+        do 
+          mapM_ putStrLn (show(fst parsedOutput))
+         -- putStrLn $ "Query Parsed: " ++ show (fst parsedOutput) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
         --inputJSON <- abortOnError (stringToJSON readFile((head(snd(parsedOutput)))))
         --let outputJSONs = execute (fst parsedOutput) inputJSON 
         --mapM_ (putStrLn . renderJSON) outputJSONs
