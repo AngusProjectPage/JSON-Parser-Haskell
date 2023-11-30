@@ -9,7 +9,8 @@ import Result
 import System.Exit 
 import System.Directory 
 import System.IO 
-import Data.Char (isSpace)
+import Data.Char (isSpace, isLower, isUpper, isNumber,
+                            digitToInt, isAlpha, isAlphaNum, isDigit)
 
 trim :: String -> String
 trim = f . f
@@ -75,7 +76,7 @@ identifier2 =
      return cs
   `orElse`
   failParse "Expecting an identifier"
-  
+
 
 parseQuery :: Parser Query  -- Elements `Pipe` Select (Field 'Height' `LessThan` ConstInt 30)
 parseQuery =    --
@@ -88,15 +89,15 @@ parseQuery =    --
      whitespaces 
      stringLiteral "Field"
      whitespace
-     fd <- indentifier2 
+     fd <- identifier2 
      return (Field fd)
   `orElse`
   do 
      whitespaces 
      stringLiteral "ConstInt"
      whitespace
-     ci <- indentifier2
-     return (ConstInt st)
+     ci <- number
+     return (ConstInt ci)
   `orElse`
   do 
     whitespaces
@@ -170,7 +171,7 @@ main =
     case result of
       Ok (parsedOutput,leftover) ->
         -- Print parsed result to console
-        putStrLn $ "Query Parsed: " ++ (fst parsedOutput) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
+        putStrLn $ "Query Parsed: " ++ show (fst parsedOutput) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
         --inputJSON <- abortOnError (stringToJSON readFile((head(snd(parsedOutput)))))
         --let outputJSONs = execute (fst parsedOutput) inputJSON 
         --mapM_ (putStrLn . renderJSON) outputJSONs
