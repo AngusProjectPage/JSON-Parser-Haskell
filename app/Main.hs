@@ -9,6 +9,11 @@ import Result
 import System.Exit 
 import System.Directory 
 import System.IO 
+import Data.Char (isSpace)
+
+trim :: String -> String
+trim = f . f
+  where f = reverse . dropWhile isSpace
 
 -- Parser for command line options
 -- newtype Parser a = MkParser (String -> Result (a, String)) -- So a stores parsed out stuff 
@@ -42,10 +47,20 @@ noDash =
        '-'  -> failParse ""
        c    -> return c
 
+noDashList :: Parser Char 
+noDashList = 
+  do c <- char 
+     case c of 
+       '-' -> failParse ""
+       ' ' -> failParse ""
+       c -> return c 
+
 command :: Parser String
 command =
   do cs <- zeroOrMore noDash
      return cs 
+
+
 
 -- String -> Result (String, [String], Leftover)
 parseCommandLine :: Parser (String,[String])
@@ -54,8 +69,11 @@ parseCommandLine =
      parseDashAndQuery -- This outputs a parser of ((), Query+Files) 
      query <- command   -- This outputs a parser of (Query, and the rest)
      parseDashAndFiles -- This outputs a parser of ((), Files) 
-     files <- sepBy whitespace command -- This outputs a parser of ((), Files)
-     return (query,files)  -- No input is consumed due to it being a monad 
+     files <- sepBy whitespace (zeroOrMore noDashList) -- This outputs a parser of ((), Files)
+     return (query,files)  -- No input is consumed due to it being a monad
+
+
+
 
 --query :: Query
 --query = Elements `Pipe` Select (Field 'Height' `LessThan` ConstInt 30)
@@ -75,7 +93,7 @@ main =
     let result = runParser parseCommandLine singleArgString
     case result of
       Ok (parsedOutput,leftover) ->
-        putStrLn $ "Query Parsed: " ++ (fst parsedOutput) ++ ", Files Parsed: " ++ show (snd parsedOutput)
+        putStrLn $ "Query Parsed: " ++ (fst parsedOutput) ++ ", Files Parsed: " ++ show (snd parsedOutput) 
         --inputJSON <- abortOnError (stringToJSON (head FileParser))
         --let outputJSONs = execute query inputJSON 
         --mapM_ (putStrLn . renderJSON) outputJSONs

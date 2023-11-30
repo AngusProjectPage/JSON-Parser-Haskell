@@ -206,8 +206,8 @@ identifier =
 -- Parses zero or more 'identifier's separated by 'space's.
 sepBy :: Parser () -> Parser a -> Parser [a]
 sepBy sep p =
-  do x  <- p
-     xs <- zeroOrMore (do sep; p)
+  do x  <- p -- Initial Parser stored in x i.e zeroOrMore noDash 
+     xs <- zeroOrMore (do sep; p) -- Run whitespace, then run parser 
      return (x:xs)
   `orElse`
   return []
