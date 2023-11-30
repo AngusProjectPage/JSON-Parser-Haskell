@@ -32,7 +32,6 @@ parseDashAndFiles = do
   isChar 'f'
   whitespaces
 
-
 parseDashAndArguments :: Parser () 
 parseDashAndArguments = do 
   whitespaces 
@@ -55,15 +54,13 @@ noDashList =
        ' ' -> failParse ""
        c -> return c 
 
-command :: Parser String
+command :: Parser Query
 command =
   do cs <- zeroOrMore noDash
-     return cs 
+     return (parseQuery cs)
 
 
-
--- String -> Result (String, [String], Leftover)
-parseCommandLine :: Parser (String,[String])
+parseCommandLine :: Parser (Query,[String])
 parseCommandLine = 
   do 
      parseDashAndQuery -- This outputs a parser of ((), Query+Files) 
@@ -72,35 +69,115 @@ parseCommandLine =
      files <- sepBy whitespace (zeroOrMore noDashList) -- This outputs a parser of ((), Files)
      return (query,files)  -- No input is consumed due to it being a monad
 
+identifier2 :: Parser String
+identifier2 =
+  do cs <- (satisfies "alphanumeric character" isAlphaNum)
+     return cs
+  `orElse`
+  failParse "Expecting an identifier"
+  
+
+parseQuery :: Parser Query  -- Elements `Pipe` Select (Field 'Height' `LessThan` ConstInt 30)
+parseQuery =    --
+  do 
+     whitespaces
+     stringLiteral "Elements"
+     return (Elements)
+  `orElse`
+  do 
+     whitespaces 
+     stringLiteral "Field"
+     whitespace
+     fd <- indentifier2 
+     return (Field fd)
+  `orElse`
+  do 
+     whitespaces 
+     stringLiteral "ConstInt"
+     whitespace
+     ci <- indentifier2
+     return (ConstInt st)
+  `orElse`
+  do 
+    whitespaces
+    stringLiteral "ConstString"
+    whitespace
+    cs <- identifier2
+    return (ConstString cs)
+  `orElse`
+  do 
+     whitespaces
+     stringLiteral "Select"
+     item <- parseQuery 
+     return (Select item)
+  `orElse`
+  do 
+     whitespaces
+     stringLiteral "Equal"
+     whitespace
+     item1 <- parseQuery
+     whitespace
+     item2 <- parseQuery
+     return (Equal item1 item2)
+  `orElse`
+  do 
+     whitespaces
+     stringLiteral "Pipe"
+     whitespace
+     item1 <- parseQuery
+     whitespace
+     item2 <- parseQuery
+     return (Pipe item1 item2)
+  `orElse`
+  do 
+     whitespaces
+     stringLiteral "GreaterThan"
+     whitespace
+     item1 <- parseQuery
+     whitespace
+     item2 <- parseQuery
+     return (GreaterThan item1 item2)
+  `orElse`
+  do 
+     whitespaces
+     stringLiteral "LessThan"
+     whitespace
+     item1 <- parseQuery
+     whitespace
+     item2 <- parseQuery
+     return (LessThan item1 item2)
+  `orElse`
+  failParse "Couldn't parse Query"
+
 
 
 
 --query :: Query
 --query = Elements `Pipe` Select (Field 'Height' `LessThan` ConstInt 30)
 
+
+-- When entering query infix notation is not permitted in this program
 main :: IO ()
 main =
-  do -- Get the JSON filename to read from the command line arguments.
-    --
-    -- FIXME: What if
-    -- we want to include additional command line options?
-    {-
-    (query, files, remainder) <- runParser parseCommandLine input
-    putStrLn query  
-    -}
-    [singleArgString] <- getArgs -- returns a list of the query and arguments
-    putStrLn singleArgString
+  do
+    -- Retrieve command line input 
+    [singleArgString] <- getArgs 
+
+    -- Run the parser on the command line input 
     let result = runParser parseCommandLine singleArgString
+
+    -- Check parsed result 
     case result of
       Ok (parsedOutput,leftover) ->
-        putStrLn $ "Query Parsed: " ++ (fst parsedOutput) ++ ", Files Parsed: " ++ show (snd parsedOutput) 
-        --inputJSON <- abortOnError (stringToJSON (head FileParser))
-        --let outputJSONs = execute query inputJSON 
+        -- Print parsed result to console
+        putStrLn $ "Query Parsed: " ++ (fst parsedOutput) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
+        --inputJSON <- abortOnError (stringToJSON readFile((head(snd(parsedOutput)))))
+        --let outputJSONs = execute (fst parsedOutput) inputJSON 
         --mapM_ (putStrLn . renderJSON) outputJSONs
       Error errorMessage ->
         putStrLn $ "Parsing error: " ++ errorMessage
+
     -- Check if all the files exist 
-    -- FIX ME
     -- rawText <- readFile filename 
     
     -- Parse the raw text of the input into a structured JSON
