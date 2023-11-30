@@ -26,6 +26,9 @@ parseDashAndQuery = do
   isChar 'q'
   whitespaces
 
+isAlphaNumNoSpace :: String -> Bool
+isAlphaNumNoSpace = all (\c -> isAlphaNum c && not (isSpace c))
+
 parseDashAndFiles :: Parser () 
 parseDashAndFiles = do 
   whitespaces
@@ -55,29 +58,18 @@ noDashList =
        ' ' -> failParse ""
        c -> return c 
 
-command :: Parser String
-command =
-  do cs <- zeroOrMore noDash
-     return cs  -- Parse the input String as a query and return 
 
 
 parseCommandLine :: Parser ([Query],[String])
 parseCommandLine = 
   do 
      parseDashAndQuery -- This outputs a parser of ((), Query+Files) 
-     query <- sepBy parseQuery (zeroOrMore noDashList)
+     query <- zeroOrMore parseQuery
      parseDashAndFiles -- This outputs a parser of ((), Files) 
      files <- sepBy whitespace (zeroOrMore noDashList) -- This outputs a parser of ((), Files)
      return (query,files)  -- No input is consumed due to it being a monad
 
-identifier2 :: Parser String
-identifier2 =
-  oneOrMore (satisfies "alphanumeric character" isAlphaNum)
-
-stringToQuery :: String -> Result Query
-stringToQuery = completeParse parseQuery
-
-
+--  Pipe Elements Select Equal Field 'Country' ConstString "S"
 parseQuery :: Parser Query
 parseQuery =    
   do 
@@ -90,7 +82,7 @@ parseQuery =
      whitespaces 
      stringLiteral "Field"
      whitespace
-     fd <- identifier2
+     fd <- quotedString 
      whitespaces 
      return (Field fd)
   `orElse`
@@ -106,7 +98,7 @@ parseQuery =
     whitespaces
     stringLiteral "ConstString"
     whitespace
-    cs <- identifier2
+    cs <- quotedString
     whitespaces
     return (ConstString cs)
   `orElse`
@@ -123,7 +115,6 @@ parseQuery =
      stringLiteral "Equal"
      whitespace
      item1 <- parseQuery
-     whitespace
      item2 <- parseQuery
      whitespaces
      return (Equal item1 item2)
@@ -133,7 +124,6 @@ parseQuery =
      stringLiteral "Pipe"
      whitespace
      item1 <- parseQuery
-     whitespace
      item2 <- parseQuery
      whitespaces
      return (Pipe item1 item2)
@@ -143,7 +133,6 @@ parseQuery =
      stringLiteral "GreaterThan"
      whitespace
      item1 <- parseQuery
-     whitespace
      item2 <- parseQuery
      whitespaces
      return (GreaterThan item1 item2)
@@ -153,7 +142,6 @@ parseQuery =
      stringLiteral "LessThan"
      whitespace
      item1 <- parseQuery
-     whitespace
      item2 <- parseQuery
      whitespaces
      return (LessThan item1 item2)
@@ -179,7 +167,7 @@ main =
       Ok (parsedOutput,leftover) ->
         -- Print parsed result to console
         do 
-          mapM_ putStrLn (show(fst parsedOutput))
+          putStrLn (show(fst parsedOutput))
          -- putStrLn $ "Query Parsed: " ++ show (fst parsedOutput) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
         --inputJSON <- abortOnError (stringToJSON readFile((head(snd(parsedOutput)))))
         --let outputJSONs = execute (fst parsedOutput) inputJSON 
