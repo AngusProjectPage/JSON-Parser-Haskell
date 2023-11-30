@@ -193,10 +193,10 @@ main =
     case result of
       Ok (parsedOutput,leftover) ->
         do 
-          rawText <- readFile(head(snd parsedOutput))
-          inputJSON <- abortOnError (stringToJSON rawText)
-          let outputJSONs = execute (removeList(fst parsedOutput)) inputJSON 
-          mapM_ (putStrLn . renderJSON) outputJSONs
+          filesRaw <- mapM readFile (snd parsedOutput)
+          inputJSONs <- abortOnError (mapM stringToJSON filesRaw)
+          let outputJSONs = map (\inputJSON -> execute (removeList (fst parsedOutput)) inputJSON) inputJSONs
+          mapM_ (mapM_ (putStrLn . renderJSON)) outputJSONs
       Error errorMessage ->
         putStrLn $ "Parsing error: " ++ errorMessage
 
