@@ -192,7 +192,7 @@ main =
       Ok (parsedOutput,leftover) ->
         -- Print parsed result to console
         do 
-          putStrLn (show(fst parsedOutput))
+          putStrLn (show(parsedOutput))
          -- putStrLn $ "Query Parsed: " ++ show (fst parsedOutput) ++ ", Files Parsed: " ++ (head(snd parsedOutput))
         --inputJSON <- abortOnError (stringToJSON readFile((head(snd(parsedOutput)))))
         --let outputJSONs = execute (fst parsedOutput) inputJSON 
