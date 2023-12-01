@@ -1,9 +1,11 @@
 module QueryInput where 
 
 import ParserCombinators
+import Result
+import QueryLanguage
 
 
--- These three parsers are responsible for looking for and removing the flags
+-- These two parsers are responsible for looking for and removing the flags
 parseDashAndQuery :: Parser () 
 parseDashAndQuery = do 
   whitespaces
@@ -34,9 +36,13 @@ noDashList =
        ' ' -> failParse ""
        c -> return c 
 
+-- This strips the list from the query leaving it as a single Query
 removeList :: [Query] -> Query 
 removeList [query] = query 
+removeList _ = error "List must contain 1 element" 
 
+
+-- This is what is called from main and returns query and files 
 parseCommandLine :: Parser ([Query],[String])
 parseCommandLine = 
   do 

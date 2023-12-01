@@ -157,14 +157,16 @@ pipe f g = concat . map g . f
 -- gives
 --
 --  > [Boolean False]
-equal :: Transformer -> Transformer -> Transformer
-equal t1 t2 xs | elements xs == [] && (t1 xs) == (t2 xs) = [Boolean True]
-               | elements xs == [] && (t1 xs) /= (t2 xs) = [Boolean False] 
-               | leftList == rightList = [Boolean True]
-               | otherwise = [Boolean False]
-                 where leftList  = [t1 a | a <- elements xs]
-                       rightList = [t2 b | b <- elements xs]
+toBool :: Bool -> JSON
+toBool  True  = Boolean True 
+toBool  False = Boolean False
 
+
+equal :: Transformer -> Transformer -> Transformer
+equal t1 t2 xs = finalList 
+                 where finalList = [toBool(x==y) | x <- leftList, y <- rightList]
+                       leftList  = t1 xs
+                       rightList = t2 xs
 -- HINT: the easiest way to write this function is to use a list
 -- comprehension (Week 4) to get all the pairs returned by the two
 -- transformers.
