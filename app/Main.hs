@@ -15,6 +15,14 @@ import Data.Char (isSpace, isLower, isUpper, isNumber,
 
 
 -- When entering query infix notation is not permitted in this program
+-- Commands should be entered in format of -q <query> -f <files>
+-- The Query will be executed on each file and the name of the file will be displayed before displaying the output of the query 
+-- The Query parser can be found in the file QueryInput.hs
+
+
+-- Additional features implemented are parsing command line, greaterThan and lessThan
+
+-- Example Query: cabal run json-query -- "-q Pipe (Elements) (Select (LessThan (Field \"Height\") (ConstInt 30))) -f data/hills.json data/hills2.json"
 main :: IO ()
 main =
   do
@@ -41,7 +49,7 @@ main =
 
           -- Print the results with filenames
           mapM_ (\(fileName, outputJSON) -> do
-                    putStrLn $ "\n\n" ++ "Results for file: " ++ fileName
+                    putStrLn ("\n\n" ++ "Results for file: " ++ fileName)
                     mapM_ (putStrLn . renderJSON) outputJSON)
                 outputJSONs
       Error errorMessage ->

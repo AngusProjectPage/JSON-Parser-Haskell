@@ -22,6 +22,7 @@ library
       ParserCombinators
       QueryLanguage
       Result
+      QueryInput
   other-modules:
       Paths_CS316Coursework2023
   hs-source-dirs:

@@ -46,11 +46,11 @@ removeList _ = error "List must contain 1 element"
 parseCommandLine :: Parser ([Query],[String])
 parseCommandLine = 
   do 
-     parseDashAndQuery -- This outputs a parser of ((), Query+Files) 
+     parseDashAndQuery 
      query <- zeroOrMore parseQuery
-     parseDashAndFiles -- This outputs a parser of ((), Files) 
-     files <- sepBy whitespace (zeroOrMore noDashList) -- This outputs a parser of ((), Files)
-     return (query,files)  -- No input is consumed due to it being a monad
+     parseDashAndFiles 
+     files <- sepBy whitespace (zeroOrMore noDashList) 
+     return (query,files)  
 
 
 whitespaceAndBracket :: Parser ()
@@ -67,7 +67,7 @@ rmBracket :: Parser ()
 rmBracket = do satisfies "Brackets" (\c -> c == '(' || c == ')')
                return ()
 
--- | Parser for removing both whitespaces and brackets 
+-- | Parser for removing brackets 
 rmBrackets :: Parser ()
 rmBrackets = do zeroOrMore rmBracket
                 return ()

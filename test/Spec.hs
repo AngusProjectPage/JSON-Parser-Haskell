@@ -141,13 +141,15 @@ propRenderJSON (Object o)      = renderJSON (Object o)      == "{" ++ intercalat
 
 
 propExecute :: Query -> JSON -> Bool 
-propExecute (Pipe q1 q2) js      = execute (Pipe q1 q2) js      == pipe (execute q1) (execute q2) js
-propExecute (Field str)  js      = execute (Field str) js       == field str js 
-propExecute (Elements)   js      = execute (Elements) js        == elements js
-propExecute (Select q)   js      = execute (Select q) js        == select (execute q) js 
-propExecute (ConstInt i) js      = execute (ConstInt i) js      == int i js
-propExecute (ConstString str) js = execute (ConstString str) js == string str js
-propExecute (Equal q1 q2) js     = execute (Equal q1 q2) js     == equal (execute q1) (execute q2) js 
+propExecute (Pipe q1 q2) js        = execute (Pipe q1 q2) js        == pipe (execute q1) (execute q2) js
+propExecute (Field str)  js        = execute (Field str) js         == field str js 
+propExecute (Elements)   js        = execute (Elements) js          == elements js
+propExecute (Select q)   js        = execute (Select q) js          == select (execute q) js 
+propExecute (ConstInt i) js        = execute (ConstInt i) js        == int i js
+propExecute (ConstString str) js   = execute (ConstString str) js   == string str js
+propExecute (Equal q1 q2) js       = execute (Equal q1 q2) js       == equal (execute q1) (execute q2) js 
+propExecute (GreaterThan q1 q2) js = execute (GreaterThan q1 q2) js == greaterThan (execute q1) (execute q2) js
+propExecute (LessThan q1 q2) js    = execute (LessThan q2 q2) js    == lessThan (execute q1) (execute q2) js
 
 
 main :: IO ()
